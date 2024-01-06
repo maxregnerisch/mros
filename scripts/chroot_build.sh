@@ -116,7 +116,9 @@ function install_pkg() {
     grub-pc \
     grub-pc-bin \
     grub2-common \
-    locales
+    locales \
+    deepin-desktop-environment 
+    
     
     case $TARGET_UBUNTU_VERSION in
         "focal" | "bionic")
