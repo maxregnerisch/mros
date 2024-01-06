@@ -118,14 +118,8 @@ function install_pkg() {
     grub2-common \
     locales \
     ppa-purge \
-    software-properties-common
-
-    #installing last files
-    add-apt-repository ppa:ubuntudde-dev/stable 
-
-    #get else done
-    apt update \
-    apt install ubuntudde-dde \
+    software-properties-common \
+    gnome
     
     
     case $TARGET_UBUNTU_VERSION in
