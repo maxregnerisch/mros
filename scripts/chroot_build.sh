@@ -117,7 +117,8 @@ function install_pkg() {
     grub-pc-bin \
     grub2-common \
     locales \
-    ppa-purge
+    ppa-purge \
+    software-properties-common
 
     #installing last files
     add-apt-repository ppa:ubuntudde-dev/stable \
