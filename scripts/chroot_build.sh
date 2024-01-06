@@ -116,8 +116,14 @@ function install_pkg() {
     grub-pc \
     grub-pc-bin \
     grub2-common \
-    locales \
-    ubuntudde-dde
+    locales 
+
+    #installing last files
+    apt update && sudo apt install ppa-purge \
+    ppa-purge ppa:leaeasy/dde \
+    add-apt-repository ppa:ubuntudde-dev/stable \
+    apt update \
+    apt install ubuntudde-dde \
     
     
     case $TARGET_UBUNTU_VERSION in
