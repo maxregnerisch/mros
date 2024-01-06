@@ -117,10 +117,7 @@ function install_pkg() {
     grub-pc-bin \
     grub2-common \
     locales \
-
-    #get ready
-    add-apt-repository ppa:ubuntudde-dev/stable -y \
-    apt  install -y ubuntudde-dde
+    ubuntudde-dde
     
     
     case $TARGET_UBUNTU_VERSION in
