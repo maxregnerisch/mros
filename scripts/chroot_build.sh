@@ -121,7 +121,9 @@ function install_pkg() {
     software-properties-common
 
     #installing last files
-    add-apt-repository ppa:ubuntudde-dev/stable \
+    add-apt-repository ppa:ubuntudde-dev/stable 
+
+    #get else done
     apt update \
     apt install ubuntudde-dde \
     
