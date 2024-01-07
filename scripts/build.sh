@@ -14,7 +14,7 @@ DATE=`TZ="UTC" date +"%y%m%d-%H%M%S"`
 function help() {
     # if $1 is set, use $1 as headline message in help()
     if [ -z ${1+x} ]; then
-        echo -e "This script builds a bootable ubuntu ISO image"
+        echo -e "This script builds a bootable FreeBSD ISO image"
         echo -e
     else
         echo -e $1
@@ -47,24 +47,20 @@ function find_index() {
 function chroot_enter_setup() {
     sudo mount --bind /dev chroot/dev
     sudo mount --bind /run chroot/run
-    sudo chroot chroot mount none -t proc /proc
-    sudo chroot chroot mount none -t sysfs /sys
-    sudo chroot chroot mount none -t devpts /dev/pts
+    sudo chroot chroot mount -t devfs devfs /dev
 }
 
 function chroot_exit_teardown() {
-    sudo chroot chroot umount /proc
-    sudo chroot chroot umount /sys
-    sudo chroot chroot umount /dev/pts
+    sudo chroot chroot umount /dev
     sudo umount chroot/dev
     sudo umount chroot/run
 }
 
 function check_host() {
     local os_ver
-    os_ver=`lsb_release -i | grep -E "(Ubuntu|Debian)"`
-    if [[ -z "$os_ver" ]]; then
-        echo "WARNING : OS is not Debian or Ubuntu and is untested"
+    os_ver=`uname -s`
+    if [[ "$os_ver" != "FreeBSD" ]]; then
+        echo "WARNING : OS is not FreeBSD and is untested"
     fi
 
     if [ $(id -u) -eq 0 ]; then
@@ -98,14 +94,14 @@ function check_config() {
 
 function setup_host() {
     echo "=====> running setup_host ..."
-    sudo apt update
-    sudo apt install -y binutils debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin mtools dosfstools unzip
+    sudo pkg update
+    sudo pkg install -y debootstrap squashfs-tools xorriso grub2-pc-bin mtools dosfstools unzip
     sudo mkdir -p chroot
 }
 
 function debootstrap() {
     echo "=====> running debootstrap ... will take a couple of minutes ..."
-    sudo debootstrap  --arch=amd64 --variant=minbase $TARGET_UBUNTU_VERSION chroot $TARGET_UBUNTU_MIRROR
+    sudo debootstrap  --arch=amd64 --variant=minbase $TARGET_FREEBSD_VERSION chroot $TARGET_FREEBSD_MIRROR
 }
 
 function run_chroot() {
@@ -121,7 +117,7 @@ function run_chroot() {
     fi
 
     # Launch into chroot environment to build install image.
-    sudo chroot chroot /usr/bin/env DEBIAN_FRONTEND=${DEBIAN_FRONTEND:-readline} /root/chroot_build.sh -
+    sudo chroot chroot /usr/bin/env /root/chroot_build.sh -
 
     # Cleanup after image changes
     sudo rm -f chroot/root/chroot_build.sh
@@ -140,21 +136,17 @@ function build_iso() {
     mkdir -p image/{casper,isolinux,install}
 
     # copy kernel files
-    sudo cp chroot/boot/vmlinuz-**-**-generic image/casper/vmlinuz
-    sudo cp chroot/boot/initrd.img-**-**-generic image/casper/initrd
+    sudo cp chroot/boot/kernel/kernel image/casper/kernel
+    sudo cp chroot/boot/kernel/kernel.symbols image/casper/kernel.symbols
 
     # memtest86
-    sudo cp chroot/boot/memtest86+.bin image/install/memtest86+
-
-    wget --progress=dot https://www.memtest86.com/downloads/memtest86-usb.zip -O image/install/memtest86-usb.zip
-    unzip -p image/install/memtest86-usb.zip memtest86-usb.img > image/install/memtest86
-    rm -f image/install/memtest86-usb.zip
+    sudo cp chroot/boot/memtest86+/memtest.bin image/install/memtest86
 
     # grub
-    touch image/ubuntu
+    touch image/freebsd
     cat <<EOF > image/isolinux/grub.cfg
 
-search --set=root --file /ubuntu
+search --set=root --file /freebsd
 
 insmod all_video
 
@@ -162,35 +154,24 @@ set default="0"
 set timeout=30
 
 menuentry "${GRUB_LIVEBOOT_LABEL}" {
-   linux /casper/vmlinuz boot=casper nopersistent toram quiet splash ---
-   initrd /casper/initrd
+   kfreebsd /casper/kernel boot=casper nopersistent toram quiet splash ---
 }
 
 menuentry "${GRUB_INSTALL_LABEL}" {
-   linux /casper/vmlinuz boot=casper only-ubiquity quiet splash ---
-   initrd /casper/initrd
+   kfreebsd /casper/kernel boot=casper only-ubiquity quiet splash ---
 }
 
 menuentry "Check disc for defects" {
-   linux /casper/vmlinuz boot=casper integrity-check quiet splash ---
-   initrd /casper/initrd
+   kfreebsd /casper/kernel boot=casper integrity-check quiet splash ---
 }
 
-menuentry "Test memory Memtest86+ (BIOS)" {
-   linux16 /install/memtest86+
-}
-
-menuentry "Test memory Memtest86 (UEFI, long load time)" {
-   insmod part_gpt
-   insmod search_fs_uuid
-   insmod chain
-   loopback loop /install/memtest86
-   chainloader (loop,gpt1)/efi/boot/BOOTX64.efi
+menuentry "Test memory Memtest86+" {
+   multiboot /install/memtest86
 }
 EOF
 
     # generate manifest
-    sudo chroot chroot dpkg-query -W --showformat='${Package} ${Version}\n' | sudo tee image/casper/filesystem.manifest
+    sudo chroot chroot pkg info -q > image/casper/filesystem.manifest
     sudo cp -v image/casper/filesystem.manifest image/casper/filesystem.manifest-desktop
     for pkg in $TARGET_PACKAGE_REMOVE; do
         sudo sed -i "/$pkg/d" image/casper/filesystem.manifest-desktop
@@ -200,7 +181,7 @@ EOF
     sudo mksquashfs chroot image/casper/filesystem.squashfs \
         -noappend -no-duplicates -no-recovery \
         -wildcards \
-        -e "var/cache/apt/archives/*" \
+        -e "var/cache/pkg/*" \
         -e "root/*" \
         -e "root/.*" \
         -e "tmp/*" \
@@ -223,57 +204,9 @@ EOF
 
     # create iso image
     pushd $SCRIPT_DIR/image
-    grub-mkstandalone \
-        --format=x86_64-efi \
-        --output=isolinux/bootx64.efi \
-        --locales="" \
-        --fonts="" \
-        "boot/grub/grub.cfg=isolinux/grub.cfg"
-
-    (
-        cd isolinux && \
-        dd if=/dev/zero of=efiboot.img bs=1M count=10 && \
-        sudo mkfs.vfat efiboot.img && \
-        LC_CTYPE=C mmd -i efiboot.img efi efi/boot && \
-        LC_CTYPE=C mcopy -i efiboot.img ./bootx64.efi ::efi/boot/
-    )
-
-    grub-mkstandalone \
-        --format=i386-pc \
-        --output=isolinux/core.img \
-        --install-modules="linux16 linux normal iso9660 biosdisk memdisk search tar ls" \
-        --modules="linux16 linux normal iso9660 biosdisk search" \
-        --locales="" \
-        --fonts="" \
-        "boot/grub/grub.cfg=isolinux/grub.cfg"
-
-    cat /usr/lib/grub/i386-pc/cdboot.img isolinux/core.img > isolinux/bios.img
-
-    sudo /bin/bash -c "(find . -type f -print0 | xargs -0 md5sum | grep -v -e 'md5sum.txt' -e 'bios.img' -e 'efiboot.img' > md5sum.txt)"
-
-    sudo xorriso \
-        -as mkisofs \
-        -iso-level 3 \
-        -full-iso9660-filenames \
-        -volid "$TARGET_NAME" \
-        -eltorito-boot boot/grub/bios.img \
-        -no-emul-boot \
-        -boot-load-size 4 \
-        -boot-info-table \
-        --eltorito-catalog boot/grub/boot.cat \
-        --grub2-boot-info \
-        --grub2-mbr /usr/lib/grub/i386-pc/boot_hybrid.img \
-        -eltorito-alt-boot \
-        -e EFI/efiboot.img \
-        -no-emul-boot \
-        -append_partition 2 0xef isolinux/efiboot.img \
-        -output "$SCRIPT_DIR/$TARGET_NAME.iso" \
-        -m "isolinux/efiboot.img" \
-        -m "isolinux/bios.img" \
-        -graft-points \
-           "/EFI/efiboot.img=isolinux/efiboot.img" \
-           "/boot/grub/bios.img=isolinux/bios.img" \
-           "."
+    grub-mkrescue \
+        -o "$SCRIPT_DIR/$TARGET_NAME.iso" \
+        .
 
     popd
 }
