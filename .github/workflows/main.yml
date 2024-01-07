@@ -1,40 +1,38 @@
 name: Build FreeBSD ISO
 
 on:
-    push:
-        branches:
-            - main
+  push:
+    branches:
+      - main
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout code
-                uses: actions/checkout@v2
+    steps:
+      - name: Set up QEMU
+        run: sudo apt-get install -y qemu
 
-            - name: Set up QEMU
-                run: sudo apt-get install -y qemu
+      - name: Download FreeBSD ISO
+        run: wget https://download.freebsd.org/ftp/releases/ISO-IMAGES/14.0/FreeBSD-14.0-RELEASE-amd64-disc1.iso
 
-            - name: Download FreeBSD ISO
-                run: wget https://download.freebsd.org/ftp/releases/ISO-IMAGES/14.0/FreeBSD-14.0-RELEASE-amd64-disc1.iso
+      - name: Create Virtual Machine
+        run: qemu-img create -f qcow2 freebsd.qcow2 20G
 
-            - name: Create Virtual Machine
-                run: qemu-img create -f qcow2 freebsd.qcow2 20G
+      - name: Install FreeBSD
+        run: qemu-system-x86_64 -m 4G -cdrom FreeBSD-13.0-RELEASE-amd64-disc1.iso -hda freebsd.qcow2 -boot d -vga std
 
-            - name: Install FreeBSD
-                run: qemu-system-x86_64 -m 4G -cdrom FreeBSD-13.0-RELEASE-amd64-disc1.iso -hda freebsd.qcow2 -boot d -vga std
+      - name: Install Ubuntu UI
+        run: sudo apt-get install -y ubuntu-desktop
 
-            - name: Install Ubuntu UI
-                run: sudo apt-get install -y ubuntu-desktop
+      - name: Start Virtual Machine
+        run: qemu-system-x86_64 -m 4G -hda freebsd.qcow2 -boot c -vga std
 
-            - name: Start Virtual Machine
-                run: qemu-system-x86_64 -m 4G -hda freebsd.qcow2 -boot c -vga std
-            - name: Create ISO
-                run: mkisofs -o freebsd.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V FreeBSD-13.0-RELEASE-amd64 .
+      - name: Create ISO
+        run: mkisofs -o freebsd.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V FreeBSD-13.0-RELEASE-amd64 .
 
-            - name: Upload ISO as artifact
-                uses: actions/upload-artifact@v2
-                with:
-                    name: freebsd-iso
-                    path: freebsd.iso
+      - name: Upload ISO as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: freebsd-iso
+          path: freebsd.iso
