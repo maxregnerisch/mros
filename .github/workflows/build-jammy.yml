@@ -1,4 +1,4 @@
-name: build-jammy
+name: build-freebsd
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: freebsd-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -17,13 +17,13 @@ jobs:
       - name: Build
         run: |
           cd scripts
-          sed -i -E 's/TARGET_UBUNTU_VERSION=(.*)/TARGET_UBUNTU_VERSION="jammy"/g' default_config.sh
+          sed -i -E 's/TARGET_UBUNTU_VERSION=(.*)/TARGET_UBUNTU_VERSION="freebsd"/g' default_config.sh
           ./build.sh -
           cd ..
       - name: Archive artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ubuntu-from-scratch
+          name: freebsd-from-scratch
           path: |
-            scripts/ubuntu-from-scratch.iso
+            scripts/freebsd-from-scratch.iso
             scripts/image/md5sum.txt
