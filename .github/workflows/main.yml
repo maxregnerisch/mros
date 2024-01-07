@@ -1,11 +1,10 @@
 name: Build FreeBSD ISO
 
 on:
-    push:
-        branches:
-            - main
-    workflow_dispatch: {} # Add workflow dispatch event
-
+  push:
+    branches:
+      - main
+  workflow_dispatch: {} # Add workflow dispatch event
 
 jobs:
   build:
@@ -17,11 +16,12 @@ jobs:
 
       - name: Download FreeBSD ISO
         run: wget https://download.freebsd.org/ftp/releases/ISO-IMAGES/14.0/FreeBSD-14.0-RELEASE-amd64-disc1.iso
+
       - name: Create Virtual Machine
         run: qemu-img create -f qcow2 freebsd.qcow2 20G
 
       - name: Install FreeBSD
-        run: qemu-system-x86_64 -m 4G -cdrom ./FreeBSD-14.0-RELEASE-amd64-disc1.iso -hda freebsd.qcow2 -boot d -vga std
+        run: qemu-system-x86_64 -m 4G -cdrom FreeBSD-14.0-RELEASE-amd64-disc1.iso -hda freebsd.qcow2 -boot d -nographic -display none
 
       - name: Install Ubuntu UI
         run: sudo apt-get install -y ubuntu-desktop
@@ -37,4 +37,3 @@ jobs:
         with:
           name: freebsd-iso
           path: ./
-
