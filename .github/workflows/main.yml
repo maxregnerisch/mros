@@ -1,9 +1,11 @@
 name: Build FreeBSD ISO
 
 on:
-  push:
-    branches:
-      - main
+    push:
+        branches:
+            - main
+    workflow_dispatch: {} # Add workflow dispatch event
+
 
 jobs:
   build:
