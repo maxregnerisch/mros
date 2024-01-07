@@ -16,8 +16,7 @@ jobs:
         run: sudo apt-get install -y qemu qemu-utils mkisofs qemu-system-x86
 
       - name: Download FreeBSD ISO
-        run: wget https://download.freebsd.org/ftp/releases/ISO-IMAGES/14.0/FreeBSD-14.0-RELEASE-amd64-disc1.iso ./FreeBSD-14.0-RELEASE-amd64-disc1.iso
-
+        run: wget https://download.freebsd.org/ftp/releases/ISO-IMAGES/14.0/FreeBSD-14.0-RELEASE-amd64-disc1.iso
       - name: Create Virtual Machine
         run: qemu-img create -f qcow2 freebsd.qcow2 20G
 
