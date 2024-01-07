@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Set up QEMU
-        run: sudo apt-get install -y qemu
+        run: sudo apt-get install -y qemu qemu-utils mkisofs
 
       - name: Download FreeBSD ISO
         run: wget https://download.freebsd.org/ftp/releases/ISO-IMAGES/14.0/FreeBSD-14.0-RELEASE-amd64-disc1.iso
