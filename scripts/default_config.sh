@@ -5,10 +5,6 @@
 # Usage: Copy this file to config.sh and make changes there.  Keep this file (default_config.sh) as-is
 #   so that subsequent changes can be easily merged from upstream.  Keep all customiations in config.sh
 
-# The version of BSD to generate.  Successfully tested: FreeBSD 13.0, OpenBSD 6.9, NetBSD 9.2
-# See the respective BSD websites for details
-export TARGET_BSD_VERSION="FreeBSD 13.0"
-
 # The BSD Mirror URL. It's better to change for faster download.
 # More mirrors see: https://www.freebsd.org/doc/handbook/mirrors.html
 export TARGET_BSD_MIRROR="https://ftp.freebsd.org/pub/FreeBSD/releases/amd64/13.0-RELEASE/"
