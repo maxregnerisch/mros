@@ -233,31 +233,11 @@ Runner: ${{ runner.os }}
 
 ISO Information:
 - Size: ${ISO_SIZE:-Unknown}
-- Path: ${ISO_PATH:-Unknown}
-
-EOF
-        
-        if [[ -n "${DOWNLOAD_URL:-}" ]]; then
-          echo "Download URL: $DOWNLOAD_URL" >> build_info.txt
-        fi
-        
-        # Copy checksums if they exist
-        if [[ -n "$ISO_PATH" ]]; then
-          iso_dir=$(dirname "$ISO_PATH")
-          iso_name=$(basename "$ISO_PATH")
-          
-          if [[ -f "$iso_dir/${iso_name}.sha256" ]]; then
-            cp "$iso_dir/${iso_name}.sha256" ./
-          fi
-          
-          if [[ -f "$iso_dir/${iso_name}.md5" ]]; then
-            cp "$iso_dir/${iso_name}.md5" ./
-          fi
-        fi
+- Path: ${ISO_PATH:-Unknown}       
     
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
+- name: Upload build artifacts
+  uses: actions/upload-artifact@v4
+  with:
         name: mros-linux-build-${{ github.run_number }}
         path: |
           build_info.txt
@@ -266,19 +246,16 @@ EOF
           *.md5
         retention-days: 30
     
-    - name: Upload ISO artifact (if small enough)
-      uses: actions/upload-artifact@v4
-      if: env.ISO_PATH != '' && env.ISO_SIZE != ''
-      with:
-        name: mros-linux-iso-${{ github.run_number }}
-        path: ${{ env.ISO_PATH }}
-        retention-days: 7
-      continue-on-error: true  # ISO might be too large for GitHub artifacts
+- name: Upload ISO artifact (if small enough)
+  uses: actions/upload-artifact@v4
+  path: ${{ env.ISO_PATH }}
+  retention-days: 7
+  continue-on-error: true  # ISO might be too large for GitHub artifacts
     
-    - name: Comment on PR with build results
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v7
-      with:
+- name: Comment on PR with build results
+  if: github.event_name == 'pull_request'
+  uses: actions/github-script@v7
+  with:
         script: |
           const buildInfo = `
           ## 🚀 mros-linux Build Results
@@ -306,8 +283,8 @@ EOF
             body: buildInfo
           });
     
-    - name: Summary
-      run: |
+- name: Summary
+  run: |
         echo "## 🎉 mros-linux Build Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Status:** ✅ Build completed successfully" >> $GITHUB_STEP_SUMMARY
