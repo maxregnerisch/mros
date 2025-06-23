@@ -59,8 +59,8 @@ jobs:
           debootstrap \\
           squashfs-tools \\
           xorriso \\
-          grub-pc-bin \\
-          grub-efi-amd64-bin \\
+          isolinux \\
+          syslinux-utils \\
           mtools \\
           python3 \\
           python3-gi \\
@@ -182,7 +182,15 @@ jobs:
           
           # Check for required files
           echo "Checking ISO contents..."
-          isoinfo -l -i "$ISO_PATH" | grep -E "(casper|boot|EFI)" || true
+          isoinfo -l -i "$ISO_PATH" | grep -E "(casper|isolinux)" || true
+          
+          # Verify isolinux boot files exist
+          echo "Verifying boot system..."
+          if isoinfo -l -i "$ISO_PATH" | grep -q "isolinux.bin"; then
+            echo "✓ isolinux boot system found"
+          else
+            echo "⚠️ isolinux boot system not found"
+          fi
           
           echo "ISO integrity test passed"
         else
@@ -328,4 +336,3 @@ EOF
         echo "- ☁️ Integrated bashupload.com functionality" >> $GITHUB_STEP_SUMMARY
         echo "- 🎨 Custom themes and visual effects" >> $GITHUB_STEP_SUMMARY
         echo "- 🚀 Live CD and installable system" >> $GITHUB_STEP_SUMMARY
-
