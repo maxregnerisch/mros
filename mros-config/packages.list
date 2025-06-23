@@ -1,0 +1,112 @@
+# mros-linux Package List
+# Core system packages and applications
+
+[CORE_SYSTEM]
+# Base system
+ubuntu-minimal
+ubuntu-standard
+linux-generic
+systemd
+network-manager
+pulseaudio
+bluetooth
+
+# Display server and graphics
+xorg
+wayland
+mesa-utils
+nvidia-driver-470
+intel-microcode
+amd64-microcode
+
+# Desktop environment dependencies
+gtk4-dev
+qt6-base-dev
+libwayland-dev
+libxkbcommon-dev
+libinput-dev
+libdrm-dev
+
+[MROS_DESKTOP]
+# Custom desktop environment (built from source)
+mros-desktop-core
+mros-taskbar
+mros-startmenu
+mros-window-manager
+mros-notifications
+mros-themes
+
+[APPLICATIONS]
+# File management
+mros-file-manager
+thunar
+gvfs
+gvfs-backends
+
+# Web browser
+firefox
+chromium-browser
+
+# Media
+vlc
+rhythmbox
+gimp
+shotwell
+
+# Office
+libreoffice
+thunderbird
+
+# Development (optional)
+code
+git
+build-essential
+python3
+nodejs
+npm
+
+# System utilities
+htop
+neofetch
+tree
+curl
+wget
+zip
+unzip
+gparted
+synaptic
+
+# Fonts
+fonts-noto
+fonts-liberation
+fonts-dejavu
+fonts-roboto
+
+[MULTIMEDIA]
+# Codecs
+ubuntu-restricted-extras
+ffmpeg
+gstreamer1.0-plugins-good
+gstreamer1.0-plugins-bad
+gstreamer1.0-plugins-ugly
+
+[UPLOAD_SERVICE]
+# Upload functionality
+curl
+jq
+notify-send
+zenity
+
+[DEVELOPMENT]
+# Development tools (optional)
+gcc
+g++
+make
+cmake
+python3-pip
+nodejs
+npm
+yarn
+docker.io
+docker-compose
+
