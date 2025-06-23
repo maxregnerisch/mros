@@ -16,11 +16,11 @@ IMAGE_DIR="$WORK_DIR/image"
 SCRATCH_DIR="$WORK_DIR/scratch"
 
 # Colors for output
-RED='\\033[0;31m'
-GREEN='\\033[0;32m'
-YELLOW='\\033[1;33m'
-BLUE='\\033[0;34m'
-NC='\\033[0m' # No Color
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
 # Logging functions
 log_info() {
@@ -101,12 +101,12 @@ bootstrap_system() {
     local base_version="${BASE_VERSION:-22.04}"
     local architecture="${ARCHITECTURE:-amd64}"
     
-    sudo debootstrap \\
-        --arch="$architecture" \\
-        --variant=minbase \\
-        --components=main,restricted,universe,multiverse \\
-        jammy \\
-        "$CHROOT_DIR" \\
+    sudo debootstrap \
+        --arch="$architecture" \
+        --variant=minbase \
+        --components=main,restricted,universe,multiverse \
+        jammy \
+        "$CHROOT_DIR" \
         http://archive.ubuntu.com/ubuntu/
     
     log_success "Base system bootstrapped"
@@ -147,51 +147,51 @@ install_packages() {
     log_info "Installing packages..."
     
     # Install essential packages
-    sudo chroot "$CHROOT_DIR" apt-get install -y \\
-        ubuntu-standard \\
-        casper \\
-        lupin-casper \\
-        discover \\
-        laptop-detect \\
-        os-prober \\
-        network-manager \\
-        resolvconf \\
-        net-tools \\
-        wireless-tools \\
-        wpagui \\
-        locales \\
+    sudo chroot "$CHROOT_DIR" apt-get install -y \
+        ubuntu-standard \
+        casper \
+        lupin-casper \
+        discover \
+        laptop-detect \
+        os-prober \
+        network-manager \
+        resolvconf \
+        net-tools \
+        wireless-tools \
+        wpagui \
+        locales \
         linux-generic
     
     # Install desktop environment dependencies
-    sudo chroot "$CHROOT_DIR" apt-get install -y \\
-        xorg \\
-        xinit \\
-        python3 \\
-        python3-gi \\
-        python3-gi-cairo \\
-        gir1.2-gtk-4.0 \\
-        python3-requests \\
-        python3-pil \\
-        libgtk-4-1 \\
+    sudo chroot "$CHROOT_DIR" apt-get install -y \
+        xorg \
+        xinit \
+        python3 \
+        python3-gi \
+        python3-gi-cairo \
+        gir1.2-gtk-4.0 \
+        python3-requests \
+        python3-pil \
+        libgtk-4-1 \
         libgtk-4-dev
     
     # Install multimedia and utilities
-    sudo chroot "$CHROOT_DIR" apt-get install -y \\
-        firefox \\
-        thunar \\
-        gnome-terminal \\
-        gedit \\
-        gnome-calculator \\
-        vlc \\
-        gimp \\
-        libreoffice \\
-        curl \\
-        wget \\
-        git \\
-        htop \\
-        neofetch \\
-        tree \\
-        zip \\
+    sudo chroot "$CHROOT_DIR" apt-get install -y \
+        firefox \
+        thunar \
+        gnome-terminal \
+        gedit \
+        gnome-calculator \
+        vlc \
+        gimp \
+        libreoffice \
+        curl \
+        wget \
+        git \
+        htop \
+        neofetch \
+        tree \
+        zip \
         unzip
     
     log_success "Packages installed"
@@ -217,7 +217,7 @@ install_mros_desktop() {
     sudo cp -r "$PROJECT_DIR/mros-themes"/* "$CHROOT_DIR/usr/share/mros/themes/"
     
     # Make scripts executable
-    sudo find "$CHROOT_DIR/usr/share/mros" -name "*.py" -exec chmod +x {} \\;
+    sudo find "$CHROOT_DIR/usr/share/mros" -name "*.py" -exec chmod +x {} \;
     
     # Create launcher scripts
     create_launcher_scripts
@@ -385,7 +385,7 @@ EOF
         cat <<EOF | sudo tee "$CHROOT_DIR/etc/systemd/system/getty@tty1.service.d/override.conf"
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --noissue --autologin ${LIVE_USER:-mros} %I \\$TERM
+ExecStart=-/sbin/agetty --noissue --autologin ${LIVE_USER:-mros} %I \$TERM
 Type=idle
 EOF
     fi
@@ -471,12 +471,12 @@ create_squashfs() {
     local compression="${COMPRESSION:-xz}"
     local compression_level="${COMPRESSION_LEVEL:-6}"
     
-    sudo mksquashfs \\
-        "$CHROOT_DIR" \\
-        "$IMAGE_DIR/casper/filesystem.squashfs" \\
-        -comp "$compression" \\
-        -Xbcj x86 \\
-        -Xdict-size 100% \\
+    sudo mksquashfs \
+        "$CHROOT_DIR" \
+        "$IMAGE_DIR/casper/filesystem.squashfs" \
+        -comp "$compression" \
+        -Xbcj x86 \
+        -Xdict-size 100% \
         -processors $(nproc)
     
     # Create filesystem.size
@@ -554,26 +554,26 @@ create_iso() {
     local iso_path="$WORK_DIR/$iso_name"
     
     # Create hybrid ISO
-    xorriso -as mkisofs \\
-        -iso-level 3 \\
-        -full-iso9660-filenames \\
-        -volid "${NAME:-mros-linux}" \\
-        -eltorito-boot boot/grub/bios.img \\
-        -no-emul-boot \\
-        -boot-load-size 4 \\
-        -boot-info-table \\
-        --eltorito-catalog boot/grub/boot.cat \\
-        --grub2-boot-info \\
-        --grub2-mbr /usr/lib/grub/i386-pc/boot_hybrid.img \\
-        -eltorito-alt-boot \\
-        -e EFI/BOOT/grubx64.efi \\
-        -no-emul-boot \\
-        -append_partition 2 0xef isolinux/efiboot.img \\
-        -output "$iso_path" \\
-        -graft-points \\
-            "." \\
-            /boot/grub/bios.img=boot/grub/bios.img \\
-            /EFI/BOOT/grubx64.efi=EFI/BOOT/grubx64.efi \\
+    xorriso -as mkisofs \
+        -iso-level 3 \
+        -full-iso9660-filenames \
+        -volid "${NAME:-mros-linux}" \
+        -eltorito-boot boot/grub/bios.img \
+        -no-emul-boot \
+        -boot-load-size 4 \
+        -boot-info-table \
+        --eltorito-catalog boot/grub/boot.cat \
+        --grub2-boot-info \
+        --grub2-mbr /usr/lib/grub/i386-pc/boot_hybrid.img \
+        -eltorito-alt-boot \
+        -e EFI/BOOT/grubx64.efi \
+        -no-emul-boot \
+        -append_partition 2 0xef isolinux/efiboot.img \
+        -output "$iso_path" \
+        -graft-points \
+            "." \
+            /boot/grub/bios.img=boot/grub/bios.img \
+            /EFI/BOOT/grubx64.efi=EFI/BOOT/grubx64.efi \
             "$IMAGE_DIR"
     
     # Create checksums
@@ -666,4 +666,3 @@ case "${1:-}" in
         main "$@"
         ;;
 esac
-
