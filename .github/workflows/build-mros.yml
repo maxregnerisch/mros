@@ -55,18 +55,18 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \\
-          debootstrap \\
-          squashfs-tools \\
-          xorriso \\
-          grub-pc-bin \\
-          grub-efi-amd64-bin \\
-          mtools \\
-          python3 \\
-          python3-gi \\
-          python3-requests \\
-          python3-pil \\
-          curl \\
+        sudo apt-get install -y \
+          debootstrap \
+          squashfs-tools \
+          xorriso \
+          grub-pc-bin \
+          grub-efi-amd64-bin \
+          mtools \
+          python3 \
+          python3-gi \
+          python3-requests \
+          python3-pil \
+          curl \
           wget
     
     - name: Validate mros configuration
@@ -101,7 +101,7 @@ jobs:
         echo "Testing mros desktop components..."
         
         # Test Python syntax
-        find mros-desktop mros-apps mros-services -name "*.py" -exec python3 -m py_compile {} \\;
+        find mros-desktop mros-apps mros-services -name "*.py" -exec python3 -m py_compile {} \;
         
         # Test import statements (basic validation)
         python3 -c "
@@ -224,20 +224,20 @@ jobs:
         
         # Create build info
         cat > build_info.txt << EOF
-
-Build Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-Git Commit: ${{ github.sha }}
-Git Branch: ${{ github.ref_name }}
-Workflow: ${{ github.workflow }}
-Runner: ${{ runner.os }}
-
-ISO Information:
-- Size: ${ISO_SIZE:-Unknown}
-- Path: ${ISO_PATH:-Unknown}       
+        Build Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+        Git Commit: ${{ github.sha }}
+        Git Branch: ${{ github.ref_name }}
+        Workflow: ${{ github.workflow }}
+        Runner: ${{ runner.os }}
+        
+        ISO Information:
+        - Size: ${ISO_SIZE:-Unknown}
+        - Path: ${ISO_PATH:-Unknown}
+        EOF
     
-- name: Upload build artifacts
-  uses: actions/upload-artifact@v4
-  with:
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
         name: mros-linux-build-${{ github.run_number }}
         path: |
           build_info.txt
@@ -246,16 +246,18 @@ ISO Information:
           *.md5
         retention-days: 30
     
-- name: Upload ISO artifact (if small enough)
-  uses: actions/upload-artifact@v4
-  path: ${{ env.ISO_PATH }}
-  retention-days: 7
-  continue-on-error: true  # ISO might be too large for GitHub artifacts
+    - name: Upload ISO artifact (if small enough)
+      uses: actions/upload-artifact@v4
+      with:
+        name: mros-linux-iso-${{ github.run_number }}
+        path: ${{ env.ISO_PATH }}
+        retention-days: 7
+      continue-on-error: true  # ISO might be too large for GitHub artifacts
     
-- name: Comment on PR with build results
-  if: github.event_name == 'pull_request'
-  uses: actions/github-script@v7
-  with:
+    - name: Comment on PR with build results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
         script: |
           const buildInfo = `
           ## 🚀 mros-linux Build Results
@@ -283,8 +285,8 @@ ISO Information:
             body: buildInfo
           });
     
-- name: Summary
-  run: |
+    - name: Summary
+      run: |
         echo "## 🎉 mros-linux Build Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Status:** ✅ Build completed successfully" >> $GITHUB_STEP_SUMMARY
@@ -303,4 +305,3 @@ ISO Information:
         echo "- ☁️ Integrated bashupload.com functionality" >> $GITHUB_STEP_SUMMARY
         echo "- 🎨 Custom themes and visual effects" >> $GITHUB_STEP_SUMMARY
         echo "- 🚀 Live CD and installable system" >> $GITHUB_STEP_SUMMARY
-
