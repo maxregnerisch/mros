@@ -10,7 +10,7 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 CONFIG_FILE="$PROJECT_DIR/mros-config/distribution.conf"
 
 # Default values
-WORK_DIR="$HOME/mros-build"
+WORK_DIR="${WORK_DIR:-$HOME/mros-build}"
 CHROOT_DIR="$WORK_DIR/chroot"
 IMAGE_DIR="$WORK_DIR/image"
 SCRATCH_DIR="$WORK_DIR/scratch"
