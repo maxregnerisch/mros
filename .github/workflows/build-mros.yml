@@ -67,6 +67,18 @@ jobs:
           python3-requests \\
           python3-pil \\
           curl \\
+        sudo apt-get install -y \
+          debootstrap \
+          squashfs-tools \
+          xorriso \
+          grub-pc-bin \
+          grub-efi-amd64-bin \
+          mtools \
+          python3 \
+          python3-gi \
+          python3-requests \
+          python3-pil \
+          curl \
           wget
     
     - name: Validate mros configuration
@@ -101,7 +113,7 @@ jobs:
         echo "Testing mros desktop components..."
         
         # Test Python syntax
-        find mros-desktop mros-apps mros-services -name "*.py" -exec python3 -m py_compile {} \\;
+        find mros-desktop mros-apps mros-services -name "*.py" -exec python3 -m py_compile {} \;
         
         # Test import statements (basic validation)
         python3 -c "
@@ -232,38 +244,16 @@ jobs:
         
         # Create build info
         cat > build_info.txt << EOF
-mros-linux Build Information
-============================
-
-Build Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-Git Commit: ${{ github.sha }}
-Git Branch: ${{ github.ref_name }}
-Workflow: ${{ github.workflow }}
-Runner: ${{ runner.os }}
-
-ISO Information:
-- Size: ${ISO_SIZE:-Unknown}
-- Path: ${ISO_PATH:-Unknown}
-
-EOF
+        Build Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+        Git Commit: ${{ github.sha }}
+        Git Branch: ${{ github.ref_name }}
+        Workflow: ${{ github.workflow }}
+        Runner: ${{ runner.os }}
         
-        if [[ -n "${DOWNLOAD_URL:-}" ]]; then
-          echo "Download URL: $DOWNLOAD_URL" >> build_info.txt
-        fi
-        
-        # Copy checksums if they exist
-        if [[ -n "$ISO_PATH" ]]; then
-          iso_dir=$(dirname "$ISO_PATH")
-          iso_name=$(basename "$ISO_PATH")
-          
-          if [[ -f "$iso_dir/${iso_name}.sha256" ]]; then
-            cp "$iso_dir/${iso_name}.sha256" ./
-          fi
-          
-          if [[ -f "$iso_dir/${iso_name}.md5" ]]; then
-            cp "$iso_dir/${iso_name}.md5" ./
-          fi
-        fi
+        ISO Information:
+        - Size: ${ISO_SIZE:-Unknown}
+        - Path: ${ISO_PATH:-Unknown}
+        EOF
     
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -278,7 +268,6 @@ EOF
     
     - name: Upload ISO artifact (if small enough)
       uses: actions/upload-artifact@v4
-      if: env.ISO_PATH != '' && env.ISO_SIZE != ''
       with:
         name: mros-linux-iso-${{ github.run_number }}
         path: ${{ env.ISO_PATH }}

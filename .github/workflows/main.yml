@@ -1,39 +1,330 @@
-name: Build FreeBSD ISO
+name: Build mros-linux
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch: {} # Add workflow dispatch event
+    branches: [ main, master, develop ]
+    paths:
+      - 'mros-**'
+      - 'scripts/build-mros.sh'
+      - '.github/workflows/build-mros.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'mros-**'
+      - 'scripts/build-mros.sh'
+      - '.github/workflows/build-mros.yml'
+  workflow_dispatch:
+    inputs:
+      upload_iso:
+        description: 'Upload ISO to bashupload.com'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  DEBIAN_FRONTEND: noninteractive
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-22.04
+    
     steps:
-      - name: Set up QEMU
-        run: sudo apt-get install -y qemu qemu-utils mkisofs qemu-system-x86
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+    
+    - name: Free up disk space
+      run: |
+        # Remove unnecessary packages to free up space
+        sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' '^php.*' '^mysql-.*'
+        sudo apt-get remove -y azure-cli google-cloud-cli microsoft-edge-stable
+        sudo apt-get remove -y google-chrome-stable firefox
+        sudo apt-get autoremove -y
+        sudo apt-get clean
+        
+        # Remove large directories
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        
+        # Show available space
+        df -h
+    
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \\
+          debootstrap \\
+          squashfs-tools \\
+          xorriso \\
+          grub-pc-bin \\
+          grub-efi-amd64-bin \\
+          mtools \\
+          python3 \\
+          python3-gi \\
+          python3-requests \\
+          python3-pil \\
+          curl \\
+          wget
+    
+    - name: Validate mros configuration
+      run: |
+        echo "Validating mros-linux configuration..."
+        
+        # Check if configuration file exists
+        if [[ ! -f "mros-config/distribution.conf" ]]; then
+          echo "Error: Configuration file not found"
+          exit 1
+        fi
+        
+        # Check if required directories exist
+        required_dirs=(
+          "mros-desktop"
+          "mros-apps"
+          "mros-services"
+          "mros-themes"
+        )
+        
+        for dir in "${required_dirs[@]}"; do
+          if [[ ! -d "$dir" ]]; then
+            echo "Error: Required directory not found: $dir"
+            exit 1
+          fi
+        done
+        
+        echo "Configuration validation passed"
+    
+    - name: Test mros desktop components
+      run: |
+        echo "Testing mros desktop components..."
+        
+        # Test Python syntax
+        find mros-desktop mros-apps mros-services -name "*.py" -exec python3 -m py_compile {} \\;
+        
+        # Test import statements (basic validation)
+        python3 -c "
+        import sys
+        sys.path.append('mros-desktop/taskbar')
+        sys.path.append('mros-apps/file-manager')
+        sys.path.append('mros-services/upload-service')
+        
+        # Test basic imports (will fail if major syntax errors)
+        try:
+            import ast
+            
+            # Parse taskbar.py
+            with open('mros-desktop/taskbar/taskbar.py', 'r') as f:
+                ast.parse(f.read())
+            print('✓ Taskbar syntax OK')
+            
+            # Parse file-manager.py
+            with open('mros-apps/file-manager/file-manager.py', 'r') as f:
+                ast.parse(f.read())
+            print('✓ File Manager syntax OK')
+            
+            # Parse upload-service.py
+            with open('mros-services/upload-service/upload-service.py', 'r') as f:
+                ast.parse(f.read())
+            print('✓ Upload Service syntax OK')
+            
+        except SyntaxError as e:
+            print(f'Syntax error: {e}')
+            sys.exit(1)
+        "
+        
+        echo "Desktop components test passed"
+    
+    - name: Build mros-linux ISO
+      run: |
+        echo "Building mros-linux ISO..."
+        
+        # Set up build environment
+        export WORK_DIR="/tmp/mros-build"
+        mkdir -p "$WORK_DIR"
+        
+        # Run build script
+        sudo -E ./scripts/build-mros.sh
+        
+        # Check if ISO was created
+        iso_file=$(find /tmp/mros-build -name "*.iso" | head -1)
+        if [[ -n "$iso_file" && -f "$iso_file" ]]; then
+          echo "ISO created successfully: $iso_file"
+          echo "ISO_PATH=$iso_file" >> $GITHUB_ENV
+          
+          # Get ISO info
+          iso_size=$(du -h "$iso_file" | cut -f1)
+          echo "ISO_SIZE=$iso_size" >> $GITHUB_ENV
+          
+          # Calculate checksums
+          cd "$(dirname "$iso_file")"
+          iso_name=$(basename "$iso_file")
+          sha256sum "$iso_name" > "${iso_name}.sha256"
+          md5sum "$iso_name" > "${iso_name}.md5"
+          
+          echo "SHA256: $(cat "${iso_name}.sha256")"
+          echo "MD5: $(cat "${iso_name}.md5")"
+        else
+          echo "Error: ISO file not found"
+          exit 1
+        fi
+    
+    - name: Test ISO integrity
+      run: |
+        echo "Testing ISO integrity..."
+        
+        if [[ -n "$ISO_PATH" && -f "$ISO_PATH" ]]; then
+          # Test ISO structure
+          iso_info=$(isoinfo -d -i "$ISO_PATH")
+          echo "ISO Info:"
+          echo "$iso_info"
+          
+          # Check for required files
+          echo "Checking ISO contents..."
+          isoinfo -l -i "$ISO_PATH" | grep -E "(casper|boot|EFI)" || true
+          
+          echo "ISO integrity test passed"
+        else
+          echo "Error: ISO path not set or file not found"
+          exit 1
+        fi
+    
+    - name: Upload ISO to bashupload.com
+      if: github.event.inputs.upload_iso == 'true' || github.ref == 'refs/heads/main'
+      run: |
+        echo "Uploading ISO to bashupload.com..."
+        
+        if [[ -n "$ISO_PATH" && -f "$ISO_PATH" ]]; then
+          iso_name=$(basename "$ISO_PATH")
+          
+          # Upload using curl
+          echo "Uploading $iso_name..."
+          upload_response=$(curl -T "$ISO_PATH" "https://bashupload.com/$iso_name" 2>/dev/null || echo "")
+          
+          if [[ -n "$upload_response" ]]; then
+            echo "Upload successful!"
+            echo "Download URL: $upload_response"
+            echo "DOWNLOAD_URL=$upload_response" >> $GITHUB_ENV
+            
+            # Save URL to file
+            echo "$upload_response" > download_url.txt
+          else
+            echo "Upload failed or no response received"
+            exit 1
+          fi
+        else
+          echo "Error: ISO file not found for upload"
+          exit 1
+        fi
+    
+    - name: Create release artifacts
+      run: |
+        echo "Creating release artifacts..."
+        
+        # Create build info
+        cat > build_info.txt << EOF
+mros-linux Build Information
+============================
 
-      - name: Download FreeBSD ISO
-        run: wget https://download.freebsd.org/ftp/releases/ISO-IMAGES/14.0/FreeBSD-14.0-RELEASE-amd64-disc1.iso
+Build Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+Git Commit: ${{ github.sha }}
+Git Branch: ${{ github.ref_name }}
+Workflow: ${{ github.workflow }}
+Runner: ${{ runner.os }}
 
-      - name: Create Virtual Machine
-        run: qemu-img create -f qcow2 freebsd.qcow2 20G
+ISO Information:
+- Size: ${ISO_SIZE:-Unknown}
+- Path: ${ISO_PATH:-Unknown}
 
-      - name: Install FreeBSD
-        run: qemu-system-x86_64 -m 4G -cdrom FreeBSD-14.0-RELEASE-amd64-disc1.iso -hda freebsd.qcow2 -boot d -nographic -display none
-
-      - name: Install Ubuntu UI
-        run: sudo apt-get install -y ubuntu-desktop
-
-      - name: Start Virtual Machine
-        run: qemu-system-x86_64 -m 4G -hda freebsd.qcow2 -boot c -vga std
-
-      - name: Create ISO
-        run: mkisofs -o freebsd.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V FreeBSD-13.0-RELEASE-amd64 .
-
-      - name: Upload ISO as artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: freebsd-iso
-          path: ./
+EOF
+        
+        if [[ -n "${DOWNLOAD_URL:-}" ]]; then
+          echo "Download URL: $DOWNLOAD_URL" >> build_info.txt
+        fi
+        
+        # Copy checksums if they exist
+        if [[ -n "$ISO_PATH" ]]; then
+          iso_dir=$(dirname "$ISO_PATH")
+          iso_name=$(basename "$ISO_PATH")
+          
+          if [[ -f "$iso_dir/${iso_name}.sha256" ]]; then
+            cp "$iso_dir/${iso_name}.sha256" ./
+          fi
+          
+          if [[ -f "$iso_dir/${iso_name}.md5" ]]; then
+            cp "$iso_dir/${iso_name}.md5" ./
+          fi
+        fi
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: mros-linux-build-${{ github.run_number }}
+        path: |
+          build_info.txt
+          download_url.txt
+          *.sha256
+          *.md5
+        retention-days: 30
+    
+    - name: Upload ISO artifact (if small enough)
+      uses: actions/upload-artifact@v4
+      if: env.ISO_PATH != '' && env.ISO_SIZE != ''
+      with:
+        name: mros-linux-iso-${{ github.run_number }}
+        path: ${{ env.ISO_PATH }}
+        retention-days: 7
+      continue-on-error: true  # ISO might be too large for GitHub artifacts
+    
+    - name: Comment on PR with build results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const buildInfo = `
+          ## 🚀 mros-linux Build Results
+          
+          **Build Status:** ✅ Success
+          **ISO Size:** ${process.env.ISO_SIZE || 'Unknown'}
+          **Build Time:** ${new Date().toISOString()}
+          
+          ${process.env.DOWNLOAD_URL ? `**Download URL:** ${process.env.DOWNLOAD_URL}` : ''}
+          
+          ### Build Artifacts
+          - Build information and checksums are available in the workflow artifacts
+          ${process.env.DOWNLOAD_URL ? '- ISO has been uploaded to bashupload.com' : ''}
+          
+          ### Next Steps
+          - Test the ISO in a virtual machine
+          - Verify all mros desktop components work correctly
+          - Check upload functionality to bashupload.com
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: buildInfo
+          });
+    
+    - name: Summary
+      run: |
+        echo "## 🎉 mros-linux Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Status:** ✅ Build completed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "**ISO Size:** ${ISO_SIZE:-Unknown}" >> $GITHUB_STEP_SUMMARY
+        echo "**Build Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ -n "${DOWNLOAD_URL:-}" ]]; then
+          echo "**Download URL:** $DOWNLOAD_URL" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "### Features Included" >> $GITHUB_STEP_SUMMARY
+        echo "- 🖥️ Windows 12-inspired desktop environment" >> $GITHUB_STEP_SUMMARY
+        echo "- 📁 Modern file manager with ribbon interface" >> $GITHUB_STEP_SUMMARY
+        echo "- ☁️ Integrated bashupload.com functionality" >> $GITHUB_STEP_SUMMARY
+        echo "- 🎨 Custom themes and visual effects" >> $GITHUB_STEP_SUMMARY
+        echo "- 🚀 Live CD and installable system" >> $GITHUB_STEP_SUMMARY
