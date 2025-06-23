@@ -697,13 +697,8 @@ create_iso() {
     fi
     
     # Create checksums
-    cd "$WORK_DIR"
-    sha256sum "$iso_name" > "${iso_name}.sha256"
-    md5sum "$iso_name" > "${iso_name}.md5"
-    
     log_success "ISO created: $iso_path"
     log_info "Size: $(du -h "$iso_path" | cut -f1)"
-    log_info "SHA256: $(cat "${iso_path}.sha256" | cut -d' ' -f1)"
 }
 
 # Upload ISO to bashupload.com

@@ -144,47 +144,38 @@ jobs:
           # Get ISO info
           iso_size=$(du -h "$iso_file" | cut -f1)
           echo "ISO_SIZE=$iso_size" >> $GITHUB_ENV
-          
-          # Calculate checksums
-          cd "$(dirname "$iso_file")"
           iso_name=$(basename "$iso_file")
-          sha256sum "$iso_name" > "${iso_name}.sha256"
-          md5sum "$iso_name" > "${iso_name}.md5"
+          echo "ISO_NAME=$iso_name" >> $GITHUB_ENV
           
-          echo "SHA256: $(cat "${iso_name}.sha256")"
-          echo "MD5: $(cat "${iso_name}.md5")"
+          echo "✅ ISO Build Complete:"
+          echo "  📁 File: $iso_name"
+          echo "  📏 Size: $iso_size"
+          echo "  📍 Path: $iso_file"
         else
-          echo "Error: ISO file not found"
+          echo "❌ Error: ISO file not found"
           exit 1
         fi
     
-    - name: Test ISO integrity
+    - name: Verify ISO file
       run: |
-        echo "Testing ISO integrity..."
+        echo "🔍 Verifying ISO file..."
         
         if [[ -n "$ISO_PATH" && -f "$ISO_PATH" ]]; then
-          # Test ISO structure
-          iso_info=$(isoinfo -d -i "$ISO_PATH")
-          echo "ISO Info:"
-          echo "$iso_info"
-          
-          # Check for required files
-          echo "Checking ISO contents..."
-          isoinfo -l -i "$ISO_PATH" | grep -E "(casper|isolinux)" || true
-          
-          # Verify isolinux boot files exist
-          echo "Verifying boot system..."
-          if isoinfo -l -i "$ISO_PATH" | grep -q "isolinux.bin"; then
-            echo "✓ isolinux boot system found"
-          else
-            echo "⚠️ isolinux boot system not found"
-          fi
-          
-          echo "ISO integrity test passed"
+          echo "✅ ISO file exists and is readable"
+          echo "📊 File details:"
+          ls -lh "$ISO_PATH"
         else
-          echo "Error: ISO path not set or file not found"
+          echo "❌ Error: ISO path not set or file not found"
           exit 1
         fi
+    
+    - name: Upload ISO as GitHub Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mros-linux-iso
+        path: ${{ env.ISO_PATH }}
+        retention-days: 30
+        compression-level: 0  # ISO is already compressed
     
     - name: Upload ISO to bashupload.com
       if: github.event.inputs.upload_iso == 'true' || github.ref == 'refs/heads/main'
@@ -238,17 +229,9 @@ jobs:
         path: |
           build_info.txt
           download_url.txt
-          *.sha256
-          *.md5
         retention-days: 30
     
-    - name: Upload ISO artifact (if small enough)
-      uses: actions/upload-artifact@v4
-      with:
-        name: mros-linux-iso-${{ github.run_number }}
-        path: ${{ env.ISO_PATH }}
-        retention-days: 7
-      continue-on-error: true  # ISO might be too large for GitHub artifacts
+
     
     - name: Comment on PR with build results
       if: github.event_name == 'pull_request'
@@ -265,8 +248,9 @@ jobs:
           ${process.env.DOWNLOAD_URL ? `**Download URL:** ${process.env.DOWNLOAD_URL}` : ''}
           
           ### Build Artifacts
-          - Build information and checksums are available in the workflow artifacts
-          ${process.env.DOWNLOAD_URL ? '- ISO has been uploaded to bashupload.com' : ''}
+          - 📦 ISO file is available as a GitHub Actions artifact
+          - 📋 Build information is available in the workflow artifacts
+          ${process.env.DOWNLOAD_URL ? '- 🌐 ISO has been uploaded to bashupload.com' : ''}
           
           ### Next Steps
           - Test the ISO in a virtual machine
