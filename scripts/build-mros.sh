@@ -493,9 +493,23 @@ cleanup_chroot() {
 create_squashfs() {
     log_info "Creating squashfs filesystem..."
     
+    # Ensure casper directory exists
+    if [[ ! -d "$IMAGE_DIR/casper" ]]; then
+        log_error "Casper directory does not exist: $IMAGE_DIR/casper"
+        log_error "Make sure create_iso_structure() is called before create_squashfs()"
+        exit 1
+    fi
+    
     local compression="${COMPRESSION:-xz}"
     local compression_level="${COMPRESSION_LEVEL:-6}"
     
+    # Remove existing filesystem.squashfs if it exists
+    if [[ -f "$IMAGE_DIR/casper/filesystem.squashfs" ]]; then
+        log_info "Removing existing filesystem.squashfs..."
+        sudo rm -f "$IMAGE_DIR/casper/filesystem.squashfs"
+    fi
+    
+    log_info "Creating squashfs with compression: $compression"
     sudo mksquashfs \
         "$CHROOT_DIR" \
         "$IMAGE_DIR/casper/filesystem.squashfs" \
@@ -504,10 +518,17 @@ create_squashfs() {
         -Xdict-size 100% \
         -processors $(nproc)
     
+    if [[ ! -f "$IMAGE_DIR/casper/filesystem.squashfs" ]]; then
+        log_error "Failed to create filesystem.squashfs"
+        exit 1
+    fi
+    
     # Create filesystem.size
+    log_info "Creating filesystem.size..."
     printf $(sudo du -sx --block-size=1 "$CHROOT_DIR" | cut -f1) | sudo tee "$IMAGE_DIR/casper/filesystem.size"
     
-    log_success "Squashfs filesystem created"
+    log_success "Squashfs filesystem created successfully"
+    log_info "Filesystem size: $(ls -lh "$IMAGE_DIR/casper/filesystem.squashfs" | awk '{print $5}')"
 }
 
 # Create ISO structure
@@ -515,11 +536,32 @@ create_iso_structure() {
     log_info "Creating ISO structure..."
     
     # Create directories
+    log_info "Creating directory structure..."
     mkdir -p "$IMAGE_DIR"/{casper,isolinux,install,.disk}
     
+    # Verify directories were created
+    for dir in casper isolinux install .disk; do
+        if [[ ! -d "$IMAGE_DIR/$dir" ]]; then
+            log_error "Failed to create directory: $IMAGE_DIR/$dir"
+            exit 1
+        fi
+    done
+    
     # Copy kernel and initrd
-    sudo cp "$CHROOT_DIR/boot/vmlinuz-"* "$IMAGE_DIR/casper/vmlinuz"
-    sudo cp "$CHROOT_DIR/boot/initrd.img-"* "$IMAGE_DIR/casper/initrd"
+    log_info "Copying kernel and initrd..."
+    if ! sudo cp "$CHROOT_DIR/boot/vmlinuz-"* "$IMAGE_DIR/casper/vmlinuz" 2>/dev/null; then
+        log_error "Failed to copy kernel from $CHROOT_DIR/boot/"
+        log_error "Available files:"
+        ls -la "$CHROOT_DIR/boot/" || true
+        exit 1
+    fi
+    
+    if ! sudo cp "$CHROOT_DIR/boot/initrd.img-"* "$IMAGE_DIR/casper/initrd" 2>/dev/null; then
+        log_error "Failed to copy initrd from $CHROOT_DIR/boot/"
+        log_error "Available files:"
+        ls -la "$CHROOT_DIR/boot/" || true
+        exit 1
+    fi
     
     # Create grub configuration
     create_grub_config
@@ -666,8 +708,8 @@ main() {
     
     # Create ISO
     cleanup_chroot
-    create_squashfs
     create_iso_structure
+    create_squashfs
     create_iso
     
     # Upload ISO
