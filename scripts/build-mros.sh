@@ -404,6 +404,9 @@ EOF
     # Set live user password
     echo "${LIVE_USER:-mros}:${LIVE_PASSWORD:-live}" | sudo chroot "$CHROOT_DIR" chpasswd
     
+    # Set root password
+    echo "root:${ROOT_PASSWORD:-mros}" | sudo chroot "$CHROOT_DIR" chpasswd
+    
     # Configure autologin
     if [[ "${AUTO_LOGIN:-true}" == "true" ]]; then
         sudo mkdir -p "$CHROOT_DIR/etc/systemd/system/getty@tty1.service.d"
