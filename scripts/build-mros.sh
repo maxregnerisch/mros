@@ -58,8 +58,8 @@ check_prerequisites() {
         "debootstrap"
         "squashfs-tools"
         "xorriso"
-        "grub-pc-bin"
-        "grub-efi-amd64-bin"
+        "isolinux"
+        "syslinux-utils"
         "mtools"
         "python3"
         "python3-gi"
@@ -531,6 +531,67 @@ create_squashfs() {
     log_info "Filesystem size: $(ls -lh "$IMAGE_DIR/casper/filesystem.squashfs" | awk '{print $5}')"
 }
 
+# Install GRUB and isolinux boot files
+install_grub_files() {
+    log_info "Installing boot files..."
+    
+    # Install isolinux files
+    if [[ -f /usr/lib/ISOLINUX/isolinux.bin ]]; then
+        sudo cp /usr/lib/ISOLINUX/isolinux.bin "$IMAGE_DIR/isolinux/"
+        sudo cp /usr/lib/syslinux/modules/bios/ldlinux.c32 "$IMAGE_DIR/isolinux/" 2>/dev/null || true
+        sudo cp /usr/lib/syslinux/modules/bios/libcom32.c32 "$IMAGE_DIR/isolinux/" 2>/dev/null || true
+        sudo cp /usr/lib/syslinux/modules/bios/libutil.c32 "$IMAGE_DIR/isolinux/" 2>/dev/null || true
+        sudo cp /usr/lib/syslinux/modules/bios/vesamenu.c32 "$IMAGE_DIR/isolinux/" 2>/dev/null || true
+    else
+        log_warning "isolinux.bin not found, trying alternative locations..."
+        # Try alternative locations
+        for path in /usr/lib/isolinux /usr/share/syslinux; do
+            if [[ -f "$path/isolinux.bin" ]]; then
+                sudo cp "$path/isolinux.bin" "$IMAGE_DIR/isolinux/"
+                break
+            fi
+        done
+    fi
+    
+    # Create isolinux configuration
+    create_isolinux_config
+    
+    log_success "Boot files installed"
+}
+
+# Create isolinux configuration
+create_isolinux_config() {
+    log_info "Creating isolinux configuration..."
+    
+    cat <<EOF > "$IMAGE_DIR/isolinux/isolinux.cfg"
+DEFAULT live
+LABEL live
+  menu label ^Start ${NAME:-mros-linux}
+  kernel /casper/vmlinuz
+  append initrd=/casper/initrd boot=casper quiet splash ---
+
+LABEL live-safe
+  menu label ^Start ${NAME:-mros-linux} (safe mode)
+  kernel /casper/vmlinuz
+  append initrd=/casper/initrd boot=casper xforcevesa quiet splash ---
+
+LABEL check
+  menu label ^Check disc for defects
+  kernel /casper/vmlinuz
+  append initrd=/casper/initrd boot=casper integrity-check quiet splash ---
+
+LABEL memtest
+  menu label ^Memory test
+  kernel /install/memtest86+.bin
+
+LABEL hd
+  menu label ^Boot from first hard disk
+  localboot 0x80
+EOF
+    
+    log_success "Isolinux configuration created"
+}
+
 # Create ISO structure
 create_iso_structure() {
     log_info "Creating ISO structure..."
@@ -563,42 +624,13 @@ create_iso_structure() {
         exit 1
     fi
     
-    # Create grub configuration
-    create_grub_config
-    
     # Create disk info
     create_disk_info
     
     log_success "ISO structure created"
 }
 
-# Create GRUB configuration
-create_grub_config() {
-    log_info "Creating GRUB configuration..."
-    
-    mkdir -p "$IMAGE_DIR/boot/grub"
-    
-    cat <<EOF > "$IMAGE_DIR/boot/grub/grub.cfg"
-search --set=root --file /casper/filesystem.squashfs
 
-insmod all_video
-
-set default="0"
-set timeout=10
-
-menuentry "${NAME:-mros-linux} ${VERSION:-1.0.0} - Live" {
-   linux /casper/vmlinuz boot=casper quiet splash ---
-   initrd /casper/initrd
-}
-
-menuentry "${NAME:-mros-linux} ${VERSION:-1.0.0} - Live (safe mode)" {
-   linux /casper/vmlinuz boot=casper xforcevesa quiet splash ---
-   initrd /casper/initrd
-}
-EOF
-    
-    log_success "GRUB configuration created"
-}
 
 # Create disk info
 create_disk_info() {
@@ -620,28 +652,49 @@ create_iso() {
     local iso_name="${ISO_NAME:-mros-linux-1.0.0-amd64.iso}"
     local iso_path="$WORK_DIR/$iso_name"
     
-    # Create hybrid ISO
-    xorriso -as mkisofs \
-        -iso-level 3 \
-        -full-iso9660-filenames \
-        -volid "${NAME:-mros-linux}" \
-        -eltorito-boot boot/grub/bios.img \
-        -no-emul-boot \
-        -boot-load-size 4 \
-        -boot-info-table \
-        --eltorito-catalog boot/grub/boot.cat \
-        --grub2-boot-info \
-        --grub2-mbr /usr/lib/grub/i386-pc/boot_hybrid.img \
-        -eltorito-alt-boot \
-        -e EFI/BOOT/grubx64.efi \
-        -no-emul-boot \
-        -append_partition 2 0xef isolinux/efiboot.img \
-        -output "$iso_path" \
-        -graft-points \
-            "." \
-            /boot/grub/bios.img=boot/grub/bios.img \
-            /EFI/BOOT/grubx64.efi=EFI/BOOT/grubx64.efi \
+    # Install GRUB boot files if not present
+    install_grub_files
+    
+    # Create basic bootable ISO using isolinux
+    log_info "Creating ISO with isolinux boot..."
+    
+    # Find the MBR file
+    local mbr_file=""
+    for path in /usr/lib/ISOLINUX/isohdpfx.bin /usr/lib/syslinux/isohdpfx.bin /usr/share/syslinux/isohdpfx.bin; do
+        if [[ -f "$path" ]]; then
+            mbr_file="$path"
+            break
+        fi
+    done
+    
+    if [[ -n "$mbr_file" ]]; then
+        log_info "Using MBR file: $mbr_file"
+        xorriso -as mkisofs \
+            -iso-level 3 \
+            -full-iso9660-filenames \
+            -volid "MROS-LINUX" \
+            -eltorito-boot isolinux/isolinux.bin \
+            -eltorito-catalog isolinux/boot.cat \
+            -no-emul-boot \
+            -boot-load-size 4 \
+            -boot-info-table \
+            -isohybrid-mbr "$mbr_file" \
+            -output "$iso_path" \
             "$IMAGE_DIR"
+    else
+        log_warning "MBR file not found, creating ISO without hybrid boot..."
+        xorriso -as mkisofs \
+            -iso-level 3 \
+            -full-iso9660-filenames \
+            -volid "MROS-LINUX" \
+            -eltorito-boot isolinux/isolinux.bin \
+            -eltorito-catalog isolinux/boot.cat \
+            -no-emul-boot \
+            -boot-load-size 4 \
+            -boot-info-table \
+            -output "$iso_path" \
+            "$IMAGE_DIR"
+    fi
     
     # Create checksums
     cd "$WORK_DIR"
