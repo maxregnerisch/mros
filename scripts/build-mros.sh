@@ -142,28 +142,48 @@ EOF
     log_success "Base system configured"
 }
 
+# Helper function to install packages with error handling
+install_package_group() {
+    local group_name="$1"
+    shift
+    local packages=("$@")
+    
+    log_info "Installing $group_name..."
+    
+    for package in "${packages[@]}"; do
+        if sudo chroot "$CHROOT_DIR" apt-cache show "$package" >/dev/null 2>&1; then
+            log_info "Installing $package..."
+            if ! sudo chroot "$CHROOT_DIR" apt-get install -y "$package"; then
+                log_warning "Failed to install $package, continuing..."
+            fi
+        else
+            log_warning "Package $package not available, skipping..."
+        fi
+    done
+}
+
 # Install packages
 install_packages() {
     log_info "Installing packages..."
     
-    # Install essential packages
-    sudo chroot "$CHROOT_DIR" apt-get install -y \
+    # Update package lists first
+    sudo chroot "$CHROOT_DIR" apt-get update
+    
+    # Install essential packages (removed obsolete packages)
+    install_package_group "essential packages" \
         ubuntu-standard \
         casper \
-        lupin-casper \
-        discover \
         laptop-detect \
         os-prober \
         network-manager \
-        resolvconf \
+        systemd-resolved \
         net-tools \
         wireless-tools \
-        wpagui \
         locales \
         linux-generic
     
     # Install desktop environment dependencies
-    sudo chroot "$CHROOT_DIR" apt-get install -y \
+    install_package_group "desktop environment packages" \
         xorg \
         xinit \
         python3 \
@@ -173,10 +193,12 @@ install_packages() {
         python3-requests \
         python3-pil \
         libgtk-4-1 \
-        libgtk-4-dev
+        libgtk-4-dev \
+        python3-cairo \
+        python3-cairo-dev
     
     # Install multimedia and utilities
-    sudo chroot "$CHROOT_DIR" apt-get install -y \
+    install_package_group "multimedia and utility packages" \
         firefox \
         thunar \
         gnome-terminal \
@@ -192,7 +214,10 @@ install_packages() {
         neofetch \
         tree \
         zip \
-        unzip
+        unzip \
+        nano \
+        vim \
+        sudo
     
     log_success "Packages installed"
 }
