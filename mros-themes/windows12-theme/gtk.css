@@ -1,0 +1,450 @@
+/* mros-linux Windows 12 GTK Theme */
+/* Modern Windows 12-inspired styling for GTK4 applications */
+
+/* Root variables */
+:root {
+  --accent-color: #0078d4;
+  --accent-light: #106ebe;
+  --accent-dark: #005a9e;
+  
+  --bg-primary: #f3f3f3;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #fafafa;
+  
+  --text-primary: #323130;
+  --text-secondary: #605e5c;
+  --text-tertiary: #8a8886;
+  
+  --surface-light: #ffffff;
+  --surface-medium: #f8f9fa;
+  --surface-dark: #e1e1e1;
+  
+  --border-light: #e1e1e1;
+  --border-medium: #d1d1d1;
+  --border-dark: #c8c8c8;
+  
+  --radius: 8px;
+  --radius-small: 4px;
+  --radius-large: 12px;
+  
+  --shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
+  --shadow-large: 0px 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Window styling */
+window {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: "Segoe UI", Ubuntu, sans-serif;
+  font-size: 14px;
+}
+
+/* Header bars */
+headerbar {
+  background: linear-gradient(to bottom, var(--surface-light), var(--surface-medium));
+  border-bottom: 1px solid var(--border-light);
+  border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: var(--shadow);
+  min-height: 40px;
+  padding: 4px 8px;
+}
+
+headerbar button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-small);
+  padding: 6px 12px;
+  margin: 2px;
+  transition: all 0.2s ease;
+}
+
+headerbar button:hover {
+  background: rgba(0, 120, 212, 0.1);
+  border-color: rgba(0, 120, 212, 0.3);
+}
+
+headerbar button:active {
+  background: rgba(0, 120, 212, 0.2);
+}
+
+/* Buttons */
+button {
+  background: var(--surface-light);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-small);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background: var(--surface-medium);
+  border-color: var(--border-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Primary buttons */
+button.suggested-action,
+button.primary {
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+  border: none;
+  color: white;
+}
+
+button.suggested-action:hover,
+button.primary:hover {
+  background: linear-gradient(135deg, var(--accent-light), var(--accent-dark));
+}
+
+/* Destructive buttons */
+button.destructive-action {
+  background: linear-gradient(135deg, #e81123, #c50e1f);
+  border: none;
+  color: white;
+}
+
+button.destructive-action:hover {
+  background: linear-gradient(135deg, #c50e1f, #a4262c);
+}
+
+/* Entry fields */
+entry {
+  background: var(--surface-light);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-small);
+  padding: 8px 12px;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+entry:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+  outline: none;
+}
+
+entry:hover {
+  border-color: var(--border-dark);
+}
+
+/* Lists and trees */
+listbox,
+treeview {
+  background: var(--surface-light);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+}
+
+listboxrow,
+treeview row {
+  padding: 8px 12px;
+  border-radius: var(--radius-small);
+  margin: 2px;
+  transition: all 0.2s ease;
+}
+
+listboxrow:hover,
+treeview row:hover {
+  background: rgba(0, 120, 212, 0.05);
+}
+
+listboxrow:selected,
+treeview row:selected {
+  background: rgba(0, 120, 212, 0.15);
+  color: var(--text-primary);
+}
+
+/* Scrollbars */
+scrollbar {
+  background: transparent;
+  border: none;
+}
+
+scrollbar slider {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  min-width: 12px;
+  min-height: 12px;
+  margin: 2px;
+  transition: all 0.2s ease;
+}
+
+scrollbar slider:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+scrollbar.horizontal slider {
+  min-height: 12px;
+}
+
+scrollbar.vertical slider {
+  min-width: 12px;
+}
+
+/* Notebooks (tabs) */
+notebook {
+  background: var(--surface-light);
+  border-radius: var(--radius);
+}
+
+notebook header {
+  background: var(--surface-medium);
+  border-bottom: 1px solid var(--border-light);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+notebook tab {
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-small) var(--radius-small) 0 0;
+  padding: 8px 16px;
+  margin: 2px 2px 0 2px;
+  transition: all 0.2s ease;
+}
+
+notebook tab:hover {
+  background: rgba(0, 120, 212, 0.1);
+}
+
+notebook tab:checked {
+  background: var(--surface-light);
+  border-bottom: 2px solid var(--accent-color);
+}
+
+/* Popovers and menus */
+popover,
+menu {
+  background: var(--surface-light);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-large);
+  padding: 4px;
+}
+
+popover modelbutton,
+menu menuitem {
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-small);
+  padding: 8px 12px;
+  margin: 2px;
+  transition: all 0.2s ease;
+}
+
+popover modelbutton:hover,
+menu menuitem:hover {
+  background: rgba(0, 120, 212, 0.1);
+}
+
+/* Progress bars */
+progressbar {
+  background: var(--surface-dark);
+  border-radius: var(--radius-large);
+  overflow: hidden;
+}
+
+progressbar progress {
+  background: linear-gradient(90deg, var(--accent-color), var(--accent-light));
+  border-radius: var(--radius-large);
+  transition: all 0.3s ease;
+}
+
+/* Switches */
+switch {
+  background: var(--surface-dark);
+  border: 1px solid var(--border-medium);
+  border-radius: 12px;
+  min-width: 44px;
+  min-height: 24px;
+  transition: all 0.2s ease;
+}
+
+switch:checked {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+switch slider {
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: 50%;
+  min-width: 20px;
+  min-height: 20px;
+  margin: 1px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Check boxes and radio buttons */
+checkbutton check,
+radiobutton radio {
+  background: var(--surface-light);
+  border: 2px solid var(--border-medium);
+  border-radius: var(--radius-small);
+  min-width: 16px;
+  min-height: 16px;
+  transition: all 0.2s ease;
+}
+
+radiobutton radio {
+  border-radius: 50%;
+}
+
+checkbutton check:checked,
+radiobutton radio:checked {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+}
+
+checkbutton check:hover,
+radiobutton radio:hover {
+  border-color: var(--accent-color);
+}
+
+/* Separators */
+separator {
+  background: var(--border-light);
+  min-width: 1px;
+  min-height: 1px;
+}
+
+/* Frames */
+frame {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: var(--surface-light);
+}
+
+frame > label {
+  background: var(--surface-light);
+  padding: 0 8px;
+  margin: 0 8px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* Spinbuttons */
+spinbutton {
+  background: var(--surface-light);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-small);
+  transition: all 0.2s ease;
+}
+
+spinbutton:focus-within {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+spinbutton button {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 4px 8px;
+}
+
+spinbutton button:hover {
+  background: rgba(0, 120, 212, 0.1);
+}
+
+/* Scale (sliders) */
+scale {
+  min-height: 20px;
+}
+
+scale trough {
+  background: var(--surface-dark);
+  border-radius: var(--radius-large);
+  min-height: 4px;
+}
+
+scale highlight {
+  background: var(--accent-color);
+  border-radius: var(--radius-large);
+}
+
+scale slider {
+  background: white;
+  border: 2px solid var(--accent-color);
+  border-radius: 50%;
+  min-width: 16px;
+  min-height: 16px;
+  box-shadow: var(--shadow);
+  transition: all 0.2s ease;
+}
+
+scale slider:hover {
+  transform: scale(1.1);
+}
+
+/* Tooltips */
+tooltip {
+  background: rgba(32, 32, 32, 0.9);
+  color: white;
+  border-radius: var(--radius-small);
+  padding: 6px 10px;
+  font-size: 12px;
+  box-shadow: var(--shadow);
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* Apply animations to appropriate elements */
+popover,
+menu,
+tooltip {
+  animation: fade-in 0.2s ease-out;
+}
+
+/* Custom mros components */
+.mros-taskbar {
+  background: rgba(32, 32, 32, 0.95);
+  border-radius: 12px 12px 0 0;
+  backdrop-filter: blur(20px);
+}
+
+.mros-start-menu {
+  background: rgba(32, 32, 32, 0.95);
+  border-radius: 12px;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mros-file-manager .ribbon {
+  background: rgba(248, 249, 250, 0.95);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.mros-upload-button {
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+  border: none;
+  color: white;
+  border-radius: var(--radius);
+  padding: 8px 16px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.mros-upload-button:hover {
+  background: linear-gradient(135deg, var(--accent-light), var(--accent-dark));
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
