@@ -224,8 +224,6 @@ jobs:
         
         # Create build info
         cat > build_info.txt << EOF
-mros-linux Build Information
-============================
 
 Build Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
 Git Commit: ${{ github.sha }}
