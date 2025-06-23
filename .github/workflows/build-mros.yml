@@ -55,31 +55,7 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \\
-          debootstrap \\
-          squashfs-tools \\
-          xorriso \\
-          isolinux \\
-          syslinux-utils \\
-          mtools \\
-          python3 \\
-          python3-gi \\
-          python3-requests \\
-          python3-pil \\
-          curl \\
-        sudo apt-get install -y \
-          debootstrap \
-          squashfs-tools \
-          xorriso \
-          grub-pc-bin \
-          grub-efi-amd64-bin \
-          mtools \
-          python3 \
-          python3-gi \
-          python3-requests \
-          python3-pil \
-          curl \
-          wget
+        sudo apt-get install -y debootstrap squashfs-tools xorriso isolinux syslinux-utils mtools python3 python3-gi python3-requests python3-pil curl wget
     
     - name: Validate mros configuration
       run: |
