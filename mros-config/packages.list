@@ -10,6 +10,8 @@ systemd
 network-manager
 pulseaudio
 bluetooth
+isolinux 
+syslinux-utils
 
 # Display server and graphics
 xorg
