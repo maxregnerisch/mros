@@ -136,7 +136,7 @@ jobs:
         sudo -E ./scripts/build-mros.sh
         
         # Check if ISO was created
-        iso_file=$(find /tmp/mros-build -name "*.iso" | head -1)
+        iso_file=$(find /tmp/mros-build /home/runner/mros-build -name "*.iso" 2>/dev/null | head -1)
         if [[ -n "$iso_file" && -f "$iso_file" ]]; then
           echo "ISO created successfully: $iso_file"
           echo "ISO_PATH=$iso_file" >> $GITHUB_ENV
