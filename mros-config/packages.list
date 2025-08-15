@@ -5,10 +5,10 @@
 # Base system
 ubuntu-minimal
 ubuntu-standard
-linux-generic
+linux-generic-arm64
 systemd
 network-manager
-pulseaudio
+pipewire
 bluetooth
 isolinux 
 syslinux-utils
@@ -17,9 +17,14 @@ syslinux-utils
 xorg
 wayland
 mesa-utils
-nvidia-driver-470
-intel-microcode
-amd64-microcode
+nvidia-driver-535-server
+adreno-drivers
+mali-drivers
+apple-silicon-support
+qualcomm-drivers
+mediatek-drivers
+rockchip-drivers
+snapdragon-compute
 
 # Desktop environment dependencies
 gtk4-dev
@@ -28,6 +33,18 @@ libwayland-dev
 libxkbcommon-dev
 libinput-dev
 libdrm-dev
+libvulkan-dev
+libgles-dev
+libegl-dev
+libgbm-dev
+libglvnd-dev
+libopencl-dev
+libcuda-dev
+libmetal-dev
+libarm-compute-dev
+libarmnn-dev
+libnpu-dev
+libdsp-dev
 
 [MROS_DESKTOP]
 # Custom desktop environment (built from source)
@@ -37,37 +54,85 @@ mros-startmenu
 mros-window-manager
 mros-notifications
 mros-themes
+mros-widgets
+mros-copilot
+mros-snap-layouts
+mros-voice-assistant
+mros-action-center
+mros-settings
+mros-store
+mros-security-center
+mros-gaming-hub
+mros-touch-keyboard
+mros-gesture-engine
+mros-fluent-effects
+mros-mica-renderer
+mros-acrylic-renderer
 
 [APPLICATIONS]
 # File management
+mros-file-explorer
 mros-file-manager
-thunar
 gvfs
 gvfs-backends
 
 # Web browser
+mros-edge
 firefox
 chromium-browser
 
 # Media
+mros-photos
+mros-videos
+mros-music
+mros-paint
 vlc
-rhythmbox
 gimp
 shotwell
 
 # Office
+mros-office
+mros-word
+mros-excel
+mros-powerpoint
+mros-outlook
+mros-onenote
+mros-teams
 libreoffice
 thunderbird
 
 # Development (optional)
+mros-visual-studio
+mros-visual-studio-code
+mros-terminal
+mros-powershell
+mros-wsl
+mros-dev-home
+mros-github-desktop
 code
 git
 build-essential
 python3
 nodejs
 npm
+rust
+go
+dotnet-sdk
+java-sdk
+arm64-toolchain
+cross-compile-tools
 
 # System utilities
+mros-task-manager
+mros-device-manager
+mros-disk-management
+mros-registry-editor
+mros-control-panel
+mros-system-info
+mros-event-viewer
+mros-services-manager
+mros-group-policy-editor
+mros-performance-monitor
 htop
 neofetch
 tree
@@ -111,4 +176,47 @@ npm
 yarn
 docker.io
 docker-compose
+clang
+llvm
+arm64-cross-toolchain
+aarch64-linux-gnu-gcc
+aarch64-linux-gnu-g++
+arm-none-eabi-gcc
+arm-none-eabi-g++
 
+[WINDOWS_FEATURES]
+# Windows 12 specific features
+mros-directx
+mros-direct3d
+mros-directml
+mros-directstorage
+mros-windows-hello
+mros-windows-security
+mros-windows-defender
+mros-windows-update
+mros-windows-store
+mros-windows-subsystem-for-android
+mros-windows-subsystem-for-linux
+mros-windows-sandbox
+mros-windows-containers
+mros-windows-hypervisor
+mros-windows-mixed-reality
+mros-windows-ai-studio
+
+[ARM64_SUPPORT]
+# ARM64 specific packages
+arm64-drivers
+arm64-firmware
+arm64-bootloader
+arm64-kernel-modules
+arm64-emulation-layer
+x86-emulation
+x64-emulation
+arm64-acceleration
+arm64-neural-engine
+arm64-gpu-drivers
+arm64-dsp-drivers
+arm64-npu-drivers
+arm64-vpu-drivers
+arm64-isp-drivers
+arm64-secure-enclave
