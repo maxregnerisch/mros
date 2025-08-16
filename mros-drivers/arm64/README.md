@@ -1,111 +1,49 @@
 # ARM64 Drivers for mros-windows12
 
-This directory contains drivers and firmware for various ARM64 platforms supported by mros-windows12.
+This directory contains platform-specific drivers and configurations for various ARM64 platforms supported by mros-windows12.
 
 ## Supported Platforms
 
 ### Apple Silicon
-- M1, M2, M3 series processors
-- GPU drivers
-- Neural Engine drivers
-- Secure Enclave support
-- Thunderbolt/USB4 controllers
-- Wi-Fi and Bluetooth modules
+- M1, M2, M3 series Macs
+- Drivers for Apple GPU, Neural Engine, and other Apple-specific hardware
 
-### Qualcomm Snapdragon
+### Qualcomm
 - Snapdragon 8cx Gen 1/2/3
 - Snapdragon X Elite/Plus
 - Adreno GPU drivers
 - Hexagon DSP drivers
-- NPU/AI accelerator drivers
-- Modem and connectivity drivers
-- Sensor hub drivers
 
-### Microsoft SQ
-- SQ1, SQ2, SQ3 processors
-- Custom GPU drivers
-- Surface-specific hardware support
-- Windows Hello camera drivers
-- Pen and touch input drivers
-- Surface Connect port drivers
+### Microsoft
+- SQ1/SQ2/SQ3 processors (Surface Pro X)
+- Microsoft-specific firmware and drivers
 
-### Samsung Exynos
-- Exynos processors with AMD RDNA graphics
+### MediaTek
+- Kompanio series
 - Mali GPU drivers
-- NPU drivers
-- ISP (Image Signal Processor) drivers
-- Modem and connectivity drivers
-
-### MediaTek Kompanio
-- Kompanio processors
-- Mali GPU drivers
-- APU (AI Processing Unit) drivers
-- Multimedia accelerators
-- Connectivity drivers
 
 ### Rockchip
 - RK3588 series
 - Mali GPU drivers
-- NPU drivers
-- Video codec accelerators
-- Display controllers
 
-### NVIDIA Tegra
-- Tegra processors
+### NVIDIA
+- Tegra platforms
 - NVIDIA GPU drivers
-- CUDA acceleration
-- Multimedia processing
-- AI acceleration
 
-## Driver Structure
+## Driver Installation
 
-Each platform directory contains the following components:
+The appropriate drivers are automatically detected and installed during the boot process based on the detected hardware platform.
 
-```
-platform/
-├── boot/           # Boot firmware and loaders
-├── gpu/            # Graphics drivers
-├── network/        # Wi-Fi, Bluetooth, and cellular drivers
-├── sensors/        # Sensor drivers (accelerometer, gyro, etc.)
-├── audio/          # Audio drivers
-├── camera/         # Camera drivers
-├── input/          # Input device drivers (touch, pen, keyboard)
-├── storage/        # Storage controllers
-├── power/          # Power management
-├── security/       # Security modules (TPM, biometrics)
-└── misc/           # Miscellaneous drivers
-```
-
-## Installation
-
-Drivers are automatically installed during the OS installation process based on hardware detection. For manual installation or updates, use the Device Manager in the Settings app.
-
-## Development
+## Adding New Drivers
 
 To add support for a new ARM64 platform:
 
-1. Create a new directory under the platform name
-2. Add necessary driver files in the appropriate subdirectories
-3. Create a `platform.conf` file with platform-specific configuration
-4. Update the build script to include the new platform
+1. Create a new directory under the appropriate platform folder
+2. Add the necessary driver files and configuration
+3. Update the platform detection script to recognize the new hardware
+4. Test on the target platform
 
-## Troubleshooting
+## Platform Detection
 
-If you encounter driver issues:
-
-1. Check the system logs: `journalctl -b`
-2. Run hardware detection: `sudo mros-hw-detect`
-3. Update drivers: `sudo mros-driver-update`
-4. Check compatibility: `mros-hw-check`
-
-## Contributing
-
-We welcome contributions to improve ARM64 platform support! Please submit pull requests with:
-
-1. Driver updates or new drivers
-2. Improved hardware detection
-3. Bug fixes for existing drivers
-4. Documentation improvements
-
-Please ensure all contributed drivers are compatible with the GPL-3.0 license.
+The platform detection script (`detect-platform.sh`) automatically identifies the ARM64 platform and loads the appropriate drivers during system boot.
 
